@@ -100,7 +100,7 @@ results_df %>%
 
 ## Problem 2 ideas
 
-Import one dataset and tidy the data set.
+First, start with a dataframe containing the file names.
 ```{r}
 path_df = tibble(
   path = list.files("data/lda_data")
@@ -108,8 +108,11 @@ path_df = tibble(
   mutate(
     path = str_c("data/lda_data/", path)
   )
+```
 
+Second, import the files and tidy the longitudinal data.
 
+```{r}
 lda_df = tibble(
   id = path_df$path,
   map_df(.x = path_df$path, ~read_csv(.x))
@@ -124,7 +127,14 @@ lda_df = tibble(
     names_prefix = "week_",
     values_to = "obs_value"
   )
+```
 
 
+Third, make the plot to show observations of each subject over time.
+
+```{r}
+lda_df %>% 
+  ggplot(aes(x = week, y = obs_value, color = group), group = id)+
+  geom_line()
 ```
 
