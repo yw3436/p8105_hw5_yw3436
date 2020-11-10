@@ -29,19 +29,102 @@ scale_fill_discrete = scale_fill_viridis_d
 This is my solution for homework 5.
 
 ## Problem 1
+read in the data
 
 ```{r}
-homicide_df = read_csv(file = "./data/homicide-data.csv")
-```
-
-Description of the data:
-This data set contains `r ncol(homicide_df)` to describe the reported homicide in 50 cities in the U.S. In total, there are `r nrow(homicide_df)` cases. The information includes `r names(homicide_df)`.
-
-```{r}
-homicide_df %>% 
-  unite("city_state", city, state, sep = ",", remove = TRUE) %>% 
-  group_by(city_state)
+#city_prop_test = function(df) {
+#  n_unsolved ...
+#  n_total ...
   
+#  prop_test(n_unsolved, n_total)
+#}
+homicide_df = read_csv(file = "./data/homicide-data.csv") %>% 
+  mutate(
+    city_state = str_c(city, state, sep = "_"),
+    resolved = case_when(
+      disposition  == "Closed without arrest" ~ "unsolved",
+      disposition  == "Open/No arrest" ~ "unsolved",
+      disposition  == "Closed by arrest" ~ "solved",
+## case_when is used to create categorical variables
+    )
+  ) %>% 
+  select(city_state, resolved) %>% 
+  filter(city_state != "Tulsa_AL") # %>% 
+  #nest(data = resolved)
 ```
 
+Let's look at this a bit
+
+```{r}
+aggregate_df = homicide_df %>% 
+  group_by(city_state) %>% 
+  summarize(
+    hom_total = n(),
+    hom_unsolved = sum(resolved == "unsolved")
+  )
+```
+
+
+Can I do a prop test for a single city?
+
+```{r}
+prop.test(
+  aggregate_df %>% filter(city_state == "Baltimore_MD") %>% pull(hom_unsolved),
+  aggregate_df %>% filter(city_state == "Baltimore_MD") %>% pull(hom_total)
+  ) %>% 
+  broom::tidy()
+## make the test result more tidy.
+```
+
+Try to iterate...
+
+```{r}
+results_df = aggregate_df %>% 
+  mutate(
+    prop_test = map2(.x = hom_unsolved, .y = hom_total, ~prop.test(x = .x, n = .y)),
+    tidy_test = map(.x = prop_test, ~broom::tidy(.x))
+  ) %>% 
+  select(-prop_test) %>% 
+  unnest(tidy_test) %>% 
+  select(city_state, estimate, conf.low, conf.high)
+```
+
+```{r}
+results_df %>% 
+  mutate(city_state = fct_reorder(city_state, estimate)) %>% 
+  ggplot(aes(x = city_state, y = estimate)) +
+  geom_point() +
+  geom_errorbar(aes(ymin = conf.low, ymax = conf.high))
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust =1))
+```
+
+## Problem 2 ideas
+
+Import one dataset and tidy the data set.
+```{r}
+path_df = tibble(
+  path = list.files("data/lda_data")
+) %>% 
+  mutate(
+    path = str_c("data/lda_data/", path)
+  )
+
+
+lda_df = tibble(
+  id = path_df$path,
+  map_df(.x = path_df$path, ~read_csv(.x))
+) %>% 
+  mutate(
+    id = substr(id, 15, 20)
+  ) %>% 
+  separate(id, c("group", "id"), sep = "_", remove = TRUE) %>% 
+  pivot_longer(
+    week_1:week_8,
+    names_to = "week",
+    names_prefix = "week_",
+    values_to = "obs_value"
+  )
+
+
+```
 
