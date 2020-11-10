@@ -118,7 +118,7 @@ lda_df = tibble(
   map_df(.x = path_df$path, ~read_csv(.x))
 ) %>% 
   mutate(
-    id = substr(id, 15, 20)
+    id = substr(id, 15, 20),
   ) %>% 
   separate(id, c("group", "id"), sep = "_", remove = TRUE) %>% 
   pivot_longer(
@@ -126,7 +126,9 @@ lda_df = tibble(
     names_to = "week",
     names_prefix = "week_",
     values_to = "obs_value"
-  )
+  ) %>% 
+  mutate(id = as.numeric(id),
+         week = as.numeric(week))
 ```
 
 
@@ -134,7 +136,20 @@ Third, make the plot to show observations of each subject over time.
 
 ```{r}
 lda_df %>% 
-  ggplot(aes(x = week, y = obs_value, color = group), group = id)+
+  ggplot(aes(x = week, y = obs_value, group = interaction(id, group), color = group)) +
   geom_line()
+
+
+interaction.plot(lda_df$week,
+lda_df$id, lda_df$obs_value, xlab="time", ylab="observations", legend=F)
 ```
+
+Difference between groups:
+
+From the spaghetti plot, we found that the observed values for the control group and the experimental group were about the same at Week 1. As time went by, the observed values for people in the experimental arm was getting larger, while the values for the control group did not change. The difference in the observed value between the two groups was larger after 8 weeks' follow up.
+
+
+
+
+
 
