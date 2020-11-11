@@ -23,6 +23,8 @@ options(
 
 scale_colour_discrete = scale_colour_viridis_d
 scale_fill_discrete = scale_fill_viridis_d
+
+set.seed(1)
 ```
 
 
@@ -149,7 +151,57 @@ Difference between groups:
 From the spaghetti plot, we found that the observed values for the control group and the experimental group were about the same at Week 1. As time went by, the observed values for people in the experimental arm was getting larger, while the values for the control group did not change. The difference in the observed value between the two groups was larger after 8 weeks' follow up.
 
 
+## Problem 3
 
+First, build the first function to obtain the estimated mean and p-value from repetive sampling, and then build the second function to obtain the average estimated mean and power.
+
+```{r}
+sam_mean_p = function(samp_size, mu, sigma){
+  sam_data = tibble(
+    x = rnorm(samp_size, mean = mu, sd = sigma)
+  ) #%>% 
+    #t.test(x, mu = mu, conf.level = 0.95)
+  result = t.test(sam_data, mu = 0) %>% 
+    broom::tidy() %>% 
+    select(estimate, p.value)
+  return(result)
+}
+
+
+power_cal = function(n, samp_size, mu, sigma){
+  sim_result = rerun(n, sam_mean_p(samp_size, mu, sigma)) %>% 
+    bind_rows() %>% 
+  mutate(
+    conclusion = case_when(
+      p.value < 0.05 ~ "reject",
+      p.value >= 0.05 ~ "fail to reject"
+    )
+  ) %>% 
+  summarise(
+    mu = mu,
+    est_mean = mean(estimate),
+    power = sum(conclusion == "reject")/n()
+  )
+  
+  return(sim_result)
+}
+
+```
+
+Next, run the power calculation for `mu = {0,1,2,3,4,5,6}`
+
+```{r, cache = TRUE}
+mu_list = list(0,1,2,3,4,5,6)
+
+output = map(.x = mu_list, ~power_cal(5000, 30, .x, 5)) %>% 
+  bind_rows()
+```
+
+Then, plot the power and the true value of mu
+
+```{r}
+output = 
+```
 
 
 
