@@ -197,11 +197,16 @@ output = map(.x = mu_list, ~power_cal(5000, 30, .x, 5)) %>%
   bind_rows()
 ```
 
-Then, plot the power and the true value of mu
+Then, plot the power and the true value of mu.
 
 ```{r}
-output = 
+output %>% 
+  ggplot(aes(x = mu, y = power)) +
+  geom_line()
 ```
 
+With the effect size increasing, the power will increase, given that alpha and sample size do not change.
 
+
+Last, make the plot
 
