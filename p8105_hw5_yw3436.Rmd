@@ -156,6 +156,7 @@ From the spaghetti plot, we found that the observed values for the control group
 First, build the first function to obtain the estimated mean and p-value from repetive sampling, and then build the second function to obtain the average estimated mean and power.
 
 ```{r}
+# sampling function
 sam_mean_p = function(samp_size, mu, sigma){
   sam_data = tibble(
     x = rnorm(samp_size, mean = mu, sd = sigma)
@@ -168,6 +169,7 @@ sam_mean_p = function(samp_size, mu, sigma){
 }
 
 
+# power calculation function
 power_cal = function(n, samp_size, mu, sigma){
   sim_result = rerun(n, sam_mean_p(samp_size, mu, sigma)) %>% 
     bind_rows() %>% 
@@ -176,15 +178,26 @@ power_cal = function(n, samp_size, mu, sigma){
       p.value < 0.05 ~ "reject",
       p.value >= 0.05 ~ "fail to reject"
     )
-  ) %>% 
-  summarise(
-    mu = mu,
-    est_mean = mean(estimate),
-    power = sum(conclusion == "reject")/n()
   )
   
-  return(sim_result)
+  total_sum = sim_result %>% 
+    summarise(
+      mu = mu,
+      est_mean = mean(estimate),
+      power = sum(conclusion == "reject")/n()
+    )
+  
+  rej_sum = sim_result %>% 
+    filter(conclusion == "reject") %>% 
+    summarise(est_mean_rej = mean(estimate))
+  
+  result = bind_cols(total_sum, rej_sum) %>% 
+    relocate(mu, est_mean, est_mean_rej, power)
+  
+  return(result)
 }
+
+power_cal(100, 30, 0, 5)
 
 ```
 
@@ -208,5 +221,13 @@ output %>%
 With the effect size increasing, the power will increase, given that alpha and sample size do not change.
 
 
-Last, make the plot
+Last, make two plots.
 
+```{r}
+output %>% 
+  ggplot(aes(x = mu)) +
+  geom_point(aes(y = est_mean), color = "red", alpha = .5) +
+  geom_point(aes(y = est_mean_rej), color = "blue", alpha = .5)
+```
+
+From the plot, we found that the sample average of estimated mu across tests for which the null is rejected is different from the true value of mu. This is because for tests in which the null is rejected, the random error is larger in these samples. Therefore, if we only calculate the estimated mu for these samples, there will be large random error so that the estimated mean will be away from the true mean.
