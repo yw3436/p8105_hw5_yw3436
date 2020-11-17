@@ -228,4 +228,13 @@ output %>%
   geom_point(aes(y = est_mean_rej), color = "blue", alpha = .5)
 ```
 
-From the plot, we found that the sample average of estimated mu across tests for which the null is rejected is different from the true value of mu. This is because for tests in which the null is rejected, the random error is larger in these samples. Therefore, if we only calculate the estimated mu for these samples, there will be large random error so that the estimated mean will be away from the true mean.
+From the plot, we found that the sample average of estimated mu across tests for which the null is rejected is different from the true value of mu when mu = 1, 2, 3, and the two values are approximately the same when mu = 0,4,5,6. 
+
+Reasons:
+
+* When mu = 0, the proportion of rejecting the null is only 5.06%. Since these samples with rejecting the null are still normally distributed with mu = 0, the estimated mean for it will be still near to 0.
+
+* When mu = 1, 2, 3, under the null hypothesis, most of the samples that reject the null will be the samples with larger estimated mean (right side of the null distribution), while samples with smaller means will not reject the null, so that the average estimated mean for these samples rejecting the null will be away from the originally set mu.
+
+* When mu = 4, 5, 6, almost all the ttests reject the null, so the average estimated mean for these samples will be approximate to the original mu.
+
