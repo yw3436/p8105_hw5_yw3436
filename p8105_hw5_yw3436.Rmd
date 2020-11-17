@@ -131,6 +131,8 @@ lda_df = tibble(
   ) %>% 
   mutate(id = as.numeric(id),
          week = as.numeric(week))
+
+lda_df
 ```
 
 
@@ -140,10 +142,6 @@ Third, make the plot to show observations of each subject over time.
 lda_df %>% 
   ggplot(aes(x = week, y = obs_value, group = interaction(id, group), color = group)) +
   geom_line()
-
-
-interaction.plot(lda_df$week,
-lda_df$id, lda_df$obs_value, xlab="time", ylab="observations", legend=F)
 ```
 
 Difference between groups:
